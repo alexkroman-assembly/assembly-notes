@@ -1,7 +1,7 @@
-import { AssemblyAI } from 'assemblyai';
-import { getSettings } from './settings.js';
-import { postToSlack } from './slack.js';
-import log from './logger.js';
+const { AssemblyAI } = require('assemblyai');
+const { getSettings } = require('./settings.js');
+const { postToSlack } = require('./slack.js');
+const log = require('./logger.js');
 
 let microphoneTranscriber = null;
 let systemAudioTranscriber = null;
@@ -230,7 +230,7 @@ function resetAai() {
   aai = null;
 }
 
-export {
+module.exports = {
   startTranscription,
   stopTranscription,
   sendMicrophoneAudio,

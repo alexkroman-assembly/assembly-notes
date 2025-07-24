@@ -1,14 +1,11 @@
-import { app, BrowserWindow } from 'electron';
-import { initMain as initAudioLoopback } from 'electron-audio-loopback';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
-import { loadSettings } from './settings.js';
-import { setupIpcHandlers } from './ipc-handlers.js';
-import log from './logger.js';
+const { app, BrowserWindow } = require('electron');
+const { initMain: initAudioLoopback } = require('electron-audio-loopback');
+const path = require('path');
+const { loadSettings } = require('./settings.js');
+const { setupIpcHandlers } = require('./ipc-handlers.js');
+const log = require('./logger.js');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// __dirname is available in CommonJS
 
 initAudioLoopback();
 

@@ -68,7 +68,7 @@ window.electronAPI.onConnectionStatus((data) => {
 window.electronAPI.onError((message) => {
   log.error('Error:', message);
   alert('Error: ' + message);
-  stop();
+  stopRecording();
 });
 
 async function start() {
@@ -136,11 +136,11 @@ async function start() {
     toggleBtn.classList.remove('recording');
     toggleBtn.classList.add('start');
     isRecording = false;
-    stop();
+    stopRecording();
   }
 }
 
-async function stop() {
+async function stopRecording() {
   toggleBtn.disabled = true;
   toggleBtn.textContent = 'Stopping...';
   isRecording = false;
@@ -173,7 +173,7 @@ async function stop() {
 
 async function toggle() {
   if (isRecording) {
-    await stop();
+    await stopRecording();
   } else {
     await start();
   }

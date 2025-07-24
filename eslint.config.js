@@ -1,7 +1,7 @@
-import js from '@eslint/js';
-import globals from 'globals';
+const js = require('@eslint/js');
+const globals = require('globals');
 
-export default [
+module.exports = [
   js.configs.recommended,
   {
     languageOptions: {
@@ -10,7 +10,7 @@ export default [
         ...globals.browser,
       },
       ecmaVersion: 2022,
-      sourceType: 'module',
+      sourceType: 'script',
     },
     rules: {
       'no-unused-vars': 'warn',
@@ -33,9 +33,10 @@ export default [
       globals: {
         ...globals.browser,
       },
+      sourceType: 'script',
     },
   },
   {
-    ignores: ['node_modules/**'],
+    ignores: ['node_modules/**', 'mypy_cache/**'],
   },
 ];

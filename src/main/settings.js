@@ -1,5 +1,5 @@
-import Store from 'electron-store';
-import log from './logger.js';
+const Store = require('electron-store');
+const log = require('./logger.js');
 
 const store = new Store({
   defaults: {
@@ -47,4 +47,4 @@ function getSettings() {
   return store.store;
 }
 
-export { loadSettings, saveSettingsToFile, getSettings };
+module.exports = { loadSettings, saveSettingsToFile, getSettings };

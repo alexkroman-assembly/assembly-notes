@@ -1,14 +1,14 @@
-import { ipcMain } from 'electron';
-import { getSettings, saveSettingsToFile } from './settings.js';
-import { resetSlackClient } from './slack.js';
-import {
+const { ipcMain } = require('electron');
+const { getSettings, saveSettingsToFile } = require('./settings.js');
+const { resetSlackClient } = require('./slack.js');
+const {
   startTranscription,
   stopTranscription,
   sendMicrophoneAudio,
   sendSystemAudio,
   resetAai,
-} from './transcription.js';
-import log from './logger.js';
+} = require('./transcription.js');
+const log = require('./logger.js');
 
 function setupIpcHandlers(mainWindow) {
   // Handle log messages from renderer
@@ -50,4 +50,4 @@ function setupIpcHandlers(mainWindow) {
   });
 }
 
-export { setupIpcHandlers };
+module.exports = { setupIpcHandlers };

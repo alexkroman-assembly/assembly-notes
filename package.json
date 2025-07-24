@@ -4,15 +4,16 @@
   "description": "Assembly Notes",
   "keywords": [],
   "main": "./src/main/main.js",
-  "type": "module",
   "version": "1.0.0",
   "author": "Alex Kroman <alex@alexkroman.com>",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder",
-    "build:mac": "electron-builder --mac",
-    "build:win": "electron-builder --win",
-    "build:linux": "electron-builder --linux",
+    "build": "npm run build-icons && electron-builder",
+    "build:mac": "npm run build-icons && electron-builder --mac",
+    "build:win": "npm run build-icons && electron-builder --win",
+    "build:linux": "npm run build-icons && electron-builder --linux",
+    "build-icons": "electron-icon-builder --input=./icon.png --output=./build",
+    "postinstall": "electron-builder install-app-deps",
     "dist": "npm run build",
     "pack": "electron-builder --dir",
     "lint": "eslint .",
@@ -22,13 +23,14 @@
     "@slack/web-api": "^7.9.3",
     "assemblyai": "^4.14.0",
     "electron-audio-loopback": "^1.0.5",
-    "electron-log": "^5.4.1",
-    "electron-store": "^10.1.0"
+    "electron-log": "^4.4.8",
+    "electron-store": "^8.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
     "electron": "35.0.0",
     "electron-builder": "^25.1.8",
+    "electron-icon-builder": "^2.0.1",
     "eslint": "^9.15.0",
     "globals": "^15.12.0",
     "prettier": "^3.4.2"
@@ -37,21 +39,35 @@
     "appId": "com.alexkroman.assembly-notes",
     "productName": "Assembly Notes",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "files": [
       "src/**/*",
       "node_modules/**/*"
     ],
+    "asarUnpack": [
+      "node_modules/electron-audio-loopback/**/*",
+      "node_modules/**/*.node"
+    ],
+    "extraMetadata": {
+      "main": "src/main/main.js"
+    },
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "asar": true,
     "mac": {
       "category": "public.app-category.productivity",
-      "target": "dmg"
+      "target": "dmg",
+      "icon": "build/icons/mac/icon.icns"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icons/win/icon.ico"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "build/icons/png"
     }
   }
 }

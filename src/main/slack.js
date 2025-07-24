@@ -1,6 +1,6 @@
-import { WebClient } from '@slack/web-api';
-import { getSettings } from './settings.js';
-import log from './logger.js';
+const { WebClient } = require('@slack/web-api');
+const { getSettings } = require('./settings.js');
+const log = require('./logger.js');
 
 let slackClient = null;
 
@@ -32,4 +32,4 @@ function resetSlackClient() {
   slackClient = null;
 }
 
-export { postToSlack, resetSlackClient };
+module.exports = { postToSlack, resetSlackClient };

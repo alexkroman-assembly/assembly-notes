@@ -4,3 +4,5 @@ out
 .claude
 .DS_Store
 dist
+build
+.mypy_cache

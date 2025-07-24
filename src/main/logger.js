@@ -1,9 +1,9 @@
-import log from 'electron-log/main.js';
-import { app } from 'electron';
-import path from 'path';
+const log = require('electron-log');
+const { app } = require('electron');
+const path = require('path');
 
 // Configure file logging
-log.transports.file.resolvePathFn = () => {
+log.transports.file.resolvePath = () => {
   const logsPath = path.join(app.getPath('userData'), 'logs', 'main.log');
   return logsPath;
 };
@@ -16,10 +16,9 @@ log.transports.console.level = 'debug';
 log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}';
 log.transports.console.format = '[{h}:{i}:{s}.{ms}] [{level}] {text}';
 
-// Catch errors
-log.errorHandler.startCatching();
+// Catch errors (different API in v4)
+if (log.catchErrors) {
+  log.catchErrors();
+}
 
-// Initialize renderer logging
-log.initialize();
-
-export default log;
+module.exports = log;
