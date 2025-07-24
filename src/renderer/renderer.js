@@ -1,8 +1,8 @@
 // Global variables
 let microphoneStream = null;
 let systemAudioStream = null;
-let microphoneProcessor = null;
-let systemAudioProcessor = null;
+let microphoneWorkletNode = null;
+let systemAudioWorkletNode = null;
 let microphoneAudioContext = null;
 let systemAudioContext = null;
 let isRecording = false;
@@ -170,84 +170,80 @@ window.electronAPI.onError((message) => {
   stop();
 });
 
-// Handle audio capture events
-window.electronAPI.onStartAudioCapture(() => {
-  startAudioProcessing();
-});
-
-window.electronAPI.onStopAudioCapture(() => {
-  stopAudioProcessing();
-});
+// Note: Audio processing is now handled directly in start() and stop() functions
+// with echo cancellation, so these old event handlers are no longer needed
 
 // Audio processing functions
 async function startAudioProcessing(processedStream, systemStream) {
   // Process the echo-cancelled stream as microphone audio
   microphoneAudioContext = new AudioContext({ sampleRate: 16000 });
+
+  // Load the AudioWorklet processor
+  await microphoneAudioContext.audioWorklet.addModule('./audio-processor.js');
+
   const micSource =
     microphoneAudioContext.createMediaStreamSource(processedStream);
-  microphoneProcessor = microphoneAudioContext.createScriptProcessor(
-    4096,
-    1,
-    1
+  microphoneWorkletNode = new AudioWorkletNode(
+    microphoneAudioContext,
+    'audio-processor'
   );
 
-  microphoneProcessor.onaudioprocess = (event) => {
-    if (!isRecording) return;
-
-    const inputData = event.inputBuffer.getChannelData(0);
-    const int16Buffer = new Int16Array(inputData.length);
-
-    for (let i = 0; i < inputData.length; i++) {
-      const sample = Math.max(-1, Math.min(1, inputData[i]));
-      int16Buffer[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+  // Handle audio data from the worklet
+  microphoneWorkletNode.port.onmessage = (event) => {
+    if (event.data.type === 'audioData') {
+      // Send the echo-cancelled audio as microphone audio
+      window.electronAPI.sendMicrophoneAudio(event.data.data);
     }
-
-    // Send the echo-cancelled audio as microphone audio
-    window.electronAPI.sendMicrophoneAudio(
-      Array.from(new Uint8Array(int16Buffer.buffer))
-    );
   };
 
-  micSource.connect(microphoneProcessor);
-  microphoneProcessor.connect(microphoneAudioContext.destination);
+  micSource.connect(microphoneWorkletNode);
+  microphoneWorkletNode.connect(microphoneAudioContext.destination);
 
   // Only process system audio separately if provided (for backwards compatibility)
   if (systemStream) {
     systemAudioContext = new AudioContext({ sampleRate: 16000 });
+
+    // Load the AudioWorklet processor for system audio
+    await systemAudioContext.audioWorklet.addModule('./audio-processor.js');
+
     const systemSource =
       systemAudioContext.createMediaStreamSource(systemStream);
-    systemAudioProcessor = systemAudioContext.createScriptProcessor(4096, 1, 1);
+    systemAudioWorkletNode = new AudioWorkletNode(
+      systemAudioContext,
+      'audio-processor'
+    );
 
-    systemAudioProcessor.onaudioprocess = (event) => {
-      if (!isRecording) return;
-
-      const inputData = event.inputBuffer.getChannelData(0);
-      const int16Buffer = new Int16Array(inputData.length);
-
-      for (let i = 0; i < inputData.length; i++) {
-        const sample = Math.max(-1, Math.min(1, inputData[i]));
-        int16Buffer[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+    // Handle audio data from the system audio worklet
+    systemAudioWorkletNode.port.onmessage = (event) => {
+      if (event.data.type === 'audioData') {
+        window.electronAPI.sendSystemAudio(event.data.data);
       }
-
-      window.electronAPI.sendSystemAudio(
-        Array.from(new Uint8Array(int16Buffer.buffer))
-      );
     };
 
-    systemSource.connect(systemAudioProcessor);
-    systemAudioProcessor.connect(systemAudioContext.destination);
+    systemSource.connect(systemAudioWorkletNode);
+    systemAudioWorkletNode.connect(systemAudioContext.destination);
   }
 }
 
 function stopAudioProcessing() {
-  if (microphoneProcessor) {
-    microphoneProcessor.disconnect();
-    microphoneProcessor = null;
+  if (microphoneWorkletNode) {
+    // Notify the worklet to stop recording
+    microphoneWorkletNode.port.postMessage({
+      type: 'setRecording',
+      value: false,
+    });
+    microphoneWorkletNode.disconnect();
+    microphoneWorkletNode = null;
   }
 
-  if (systemAudioProcessor) {
-    systemAudioProcessor.disconnect();
-    systemAudioProcessor = null;
+  if (systemAudioWorkletNode) {
+    // Notify the worklet to stop recording
+    systemAudioWorkletNode.port.postMessage({
+      type: 'setRecording',
+      value: false,
+    });
+    systemAudioWorkletNode.disconnect();
+    systemAudioWorkletNode = null;
   }
 
   if (microphoneAudioContext) {
@@ -309,23 +305,36 @@ async function start() {
       systemAudioStream
     );
 
-    // Start audio processing for the processed stream
-    startAudioProcessing(processedStream, null); // Only process the echo-cancelled stream
+    // Start audio processing for the processed stream (but don't start recording yet)
+    await startAudioProcessing(processedStream, null); // Only process the echo-cancelled stream
 
-    // Start recording with AssemblyAI
-    isRecording = true;
+    // Start recording with AssemblyAI first
     const success = await window.electronAPI.startRecording();
 
-    if (success) {
-      toggleBtn.disabled = false;
-      toggleBtn.textContent = 'Stop Recording';
-      toggleBtn.classList.remove('start');
-      toggleBtn.classList.add('recording');
-      isRecording = true;
-      console.log('Transcription started for both streams');
-    } else {
+    if (!success) {
       throw new Error('Failed to start recording');
     }
+
+    // Only start recording in worklet nodes after AssemblyAI connection is established
+    isRecording = true;
+    if (microphoneWorkletNode) {
+      microphoneWorkletNode.port.postMessage({
+        type: 'setRecording',
+        value: true,
+      });
+    }
+    if (systemAudioWorkletNode) {
+      systemAudioWorkletNode.port.postMessage({
+        type: 'setRecording',
+        value: true,
+      });
+    }
+
+    toggleBtn.disabled = false;
+    toggleBtn.textContent = 'Stop Recording';
+    toggleBtn.classList.remove('start');
+    toggleBtn.classList.add('recording');
+    console.log('Transcription started for both streams');
   } catch (error) {
     console.error('Error starting transcription:', error);
     alert('Error starting transcription: ' + error.message);
@@ -346,6 +355,9 @@ async function stop() {
 
   // Stop recording
   await window.electronAPI.stopRecording();
+
+  // Stop audio processing
+  stopAudioProcessing();
 
   // Stop media streams
   if (microphoneStream) {
