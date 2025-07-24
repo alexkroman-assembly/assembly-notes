@@ -10,9 +10,9 @@
   --text-disabled: rgba(255, 255, 255, 0.5);
   --text-placeholder: rgba(255, 255, 255, 0.4);
 
-  --surface-1: rgba(255, 255, 255, 0.05); /* Disabled, scroll track */
-  --surface-2: rgba(255, 255, 255, 0.08); /* Input background */
-  --surface-3: rgba(255, 255, 255, 0.1); /* Default surface */
+  --surface-1: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --surface-3: rgba(255, 255, 255, 0.1);
   --surface-focus: rgba(255, 255, 255, 0.12);
 
   --border-1: rgba(255, 255, 255, 0.1);
@@ -161,7 +161,7 @@ button.recording:hover {
 
 /* --- Typography Helpers --- */
 .status {
-  margin: 8px 0 2px;
+  margin: -6px 0 2px;
   padding: 2px 4px 0;
   font-size: 0.7em;
   color: var(--text-disabled);
@@ -182,7 +182,7 @@ button.recording:hover {
 .settings-modal {
   display: none;
   position: fixed;
-  inset: 0; /* Replaces top, left, width, height */
+  inset: 0;
   background-color: var(--bg-modal-overlay);
   z-index: 1000;
 }

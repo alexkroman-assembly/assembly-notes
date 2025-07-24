@@ -1,5 +1,6 @@
 import { WebClient } from '@slack/web-api';
 import { getSettings } from './settings.js';
+import log from './logger.js';
 
 let slackClient = null;
 
@@ -23,7 +24,7 @@ async function postToSlack(summary, title) {
       mrkdwn: true,
     });
   } catch (error) {
-    console.error(`Error posting to Slack: ${error.message}`);
+    log.error(`Error posting to Slack: ${error.message}`);
   }
 }
 

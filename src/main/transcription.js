@@ -1,6 +1,7 @@
 import { AssemblyAI } from 'assemblyai';
 import { getSettings } from './settings.js';
 import { postToSlack } from './slack.js';
+import log from './logger.js';
 
 let microphoneTranscriber = null;
 let systemAudioTranscriber = null;
@@ -36,7 +37,7 @@ async function processRecordingComplete() {
     await postToSlack(summary, title);
     return true;
   } catch (err) {
-    console.error(`Error during summarization: ${err.message}`);
+    log.error(`Error during summarization: ${err.message}`);
     return false;
   }
 }
@@ -71,7 +72,7 @@ async function startTranscription(mainWindow) {
     });
 
     microphoneTranscriber.on('error', async (error) => {
-      console.error('❌ Microphone transcription error:', error);
+      log.error('Microphone transcription error:', error);
       mainWindow.webContents.send(
         'error',
         `Microphone error: ${error.message}`
@@ -82,7 +83,7 @@ async function startTranscription(mainWindow) {
         error.message &&
         error.message.includes('Session idle for too long')
       ) {
-        console.log('Session idle timeout detected, stopping recording...');
+        log.info('Session idle timeout detected, stopping recording...');
         await stopTranscription(mainWindow);
       }
     });
@@ -124,7 +125,7 @@ async function startTranscription(mainWindow) {
     });
 
     systemAudioTranscriber.on('error', async (error) => {
-      console.error('❌ System audio transcription error:', error);
+      log.error('System audio transcription error:', error);
       mainWindow.webContents.send(
         'error',
         `System audio error: ${error.message}`
@@ -135,7 +136,7 @@ async function startTranscription(mainWindow) {
         error.message &&
         error.message.includes('Session idle for too long')
       ) {
-        console.log('Session idle timeout detected, stopping recording...');
+        log.info('Session idle timeout detected, stopping recording...');
         await stopTranscription(mainWindow);
       }
     });
@@ -174,7 +175,7 @@ async function startTranscription(mainWindow) {
 
     return true;
   } catch (error) {
-    console.error('❌ Failed to start transcription:', error);
+    log.error('Failed to start transcription:', error);
     mainWindow.webContents.send('error', `Failed to start: ${error.message}`);
     return false;
   }
@@ -193,11 +194,11 @@ async function stopTranscription(mainWindow) {
     systemAudioTranscriber = null;
   }
 
-  console.log('✅ Recording stopped.');
+  log.info('Recording stopped.');
   mainWindow.webContents.send('recording-stopped');
 
   processRecordingComplete().catch((error) => {
-    console.error('❌ Post-processing failed:', error);
+    log.error('Post-processing failed:', error);
   });
 
   return true;
@@ -209,7 +210,7 @@ function sendMicrophoneAudio(audioData) {
       const buffer = Buffer.from(audioData);
       microphoneTranscriber.sendAudio(buffer);
     } catch (error) {
-      console.error('Error sending microphone audio:', error);
+      log.error('Error sending microphone audio:', error);
     }
   }
 }
@@ -220,7 +221,7 @@ function sendSystemAudio(audioData) {
       const buffer = Buffer.from(audioData);
       systemAudioTranscriber.sendAudio(buffer);
     } catch (error) {
-      console.error('Error sending system audio:', error);
+      log.error('Error sending system audio:', error);
     }
   }
 }

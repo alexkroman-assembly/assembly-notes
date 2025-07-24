@@ -1,4 +1,5 @@
 import Store from 'electron-store';
+import log from './logger.js';
 
 const store = new Store({
   defaults: {
@@ -37,7 +38,7 @@ function saveSettingsToFile(newSettings) {
       store.set(key, newSettings[key]);
     });
   } catch (error) {
-    console.error('Error saving settings:', error);
+    log.error('Error saving settings:', error);
     throw error;
   }
 }

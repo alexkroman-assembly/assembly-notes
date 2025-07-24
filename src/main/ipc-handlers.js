@@ -8,8 +8,20 @@ import {
   sendSystemAudio,
   resetAai,
 } from './transcription.js';
+import log from './logger.js';
 
 function setupIpcHandlers(mainWindow) {
+  // Handle log messages from renderer
+  ipcMain.on('log', (event, level, ...args) => {
+    const message = args
+      .map((arg) =>
+        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+      )
+      .join(' ');
+
+    log[level](`[Renderer] ${message}`);
+  });
+
   ipcMain.on('microphone-audio-data', (event, audioData) => {
     sendMicrophoneAudio(audioData);
   });

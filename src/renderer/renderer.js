@@ -1,3 +1,5 @@
+const log = window.logger;
+
 const { processEchoCancellation, cleanupEchoCancellation } =
   window.EchoCancellation;
 const { startAudioProcessing, stopAudioProcessing, setRecordingState } =
@@ -64,7 +66,7 @@ window.electronAPI.onConnectionStatus((data) => {
 });
 
 window.electronAPI.onError((message) => {
-  console.error('Error:', message);
+  log.error('Error:', message);
   alert('Error: ' + message);
   stop();
 });
@@ -127,7 +129,7 @@ async function start() {
     toggleBtn.classList.remove('start');
     toggleBtn.classList.add('recording');
   } catch (error) {
-    console.error('Error starting transcription:', error);
+    log.error('Error starting transcription:', error);
     alert('Error starting transcription: ' + error.message);
     toggleBtn.disabled = false;
     toggleBtn.textContent = 'Start Recording';

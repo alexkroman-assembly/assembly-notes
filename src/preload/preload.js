@@ -35,3 +35,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
 });
+
+// Expose logger to renderer (sends to main process)
+contextBridge.exposeInMainWorld('logger', {
+  info: (...args) => ipcRenderer.send('log', 'info', ...args),
+  warn: (...args) => ipcRenderer.send('log', 'warn', ...args),
+  error: (...args) => ipcRenderer.send('log', 'error', ...args),
+  debug: (...args) => ipcRenderer.send('log', 'debug', ...args),
+});
