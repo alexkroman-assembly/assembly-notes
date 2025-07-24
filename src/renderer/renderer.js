@@ -1,113 +1,20 @@
-// Global variables
+const { processEchoCancellation, cleanupEchoCancellation } =
+  window.EchoCancellation;
+const { startAudioProcessing, stopAudioProcessing, setRecordingState } =
+  window.AudioProcessing;
+const { showSettingsModal, setupSettingsModalEvents } = window.SettingsModal;
+
 let microphoneStream = null;
 let systemAudioStream = null;
-let microphoneWorkletNode = null;
-let systemAudioWorkletNode = null;
-let microphoneAudioContext = null;
-let systemAudioContext = null;
 let isRecording = false;
 let micConnected = false;
 let systemConnected = false;
 
-// Echo cancellation variables
-let echoCancellationContext = null;
-let microphoneSource = null;
-let systemAudioSource = null;
-let echoCancelledDestination = null;
-let echoCancelledStream = null;
-
-// DOM elements
 const transcriptionResults = document.getElementById('transcriptionResults');
 const audioStatus = document.getElementById('audioStatus');
 const toggleBtn = document.getElementById('toggleBtn');
 const settingsBtn = document.getElementById('settingsBtn');
-const closeBtn = document.getElementById('closeBtn');
-const saveBtn = document.getElementById('saveBtn');
-const settingsModal = document.getElementById('settingsModal');
-const assemblyaiKeyInput = document.getElementById('assemblyaiKey');
-const slackTokenInput = document.getElementById('slackToken');
-const slackChannelInput = document.getElementById('slackChannel');
-const summaryPromptInput = document.getElementById('summaryPrompt');
 
-// Echo cancellation processing
-function createEchoCancellationProcessor() {
-  echoCancellationContext = new (window.AudioContext ||
-    window.webkitAudioContext)();
-
-  // Create destination for processed audio
-  echoCancelledDestination =
-    echoCancellationContext.createMediaStreamDestination();
-
-  return echoCancellationContext;
-}
-
-function processEchoCancellation(micStream, systemStream) {
-  if (!echoCancellationContext) {
-    createEchoCancellationProcessor();
-  }
-
-  // Create sources from streams
-  microphoneSource = echoCancellationContext.createMediaStreamSource(micStream);
-  systemAudioSource =
-    echoCancellationContext.createMediaStreamSource(systemStream);
-
-  // Create delay node to simulate echo delay
-  const delayNode = echoCancellationContext.createDelay(1.0);
-  delayNode.delayTime.setValueAtTime(0.1, echoCancellationContext.currentTime); // 100ms delay
-
-  // Create gain nodes for mixing
-  const micGain = echoCancellationContext.createGain();
-  const systemGain = echoCancellationContext.createGain();
-  const echoGain = echoCancellationContext.createGain();
-
-  // Set gain values
-  micGain.gain.setValueAtTime(1.0, echoCancellationContext.currentTime);
-  systemGain.gain.setValueAtTime(0.8, echoCancellationContext.currentTime); // Reduce system audio slightly
-  echoGain.gain.setValueAtTime(-0.5, echoCancellationContext.currentTime); // Invert for cancellation
-
-  // Create echo cancellation chain
-  // System audio -> delay -> inverted gain for cancellation
-  systemAudioSource.connect(delayNode);
-  delayNode.connect(echoGain);
-
-  // Mix microphone with echo-cancelled signal
-  microphoneSource.connect(micGain);
-  micGain.connect(echoCancelledDestination);
-
-  // Add inverted delayed system audio to cancel echo
-  echoGain.connect(echoCancelledDestination);
-
-  // Also pass through system audio separately (reduced volume)
-  systemAudioSource.connect(systemGain);
-  systemGain.connect(echoCancelledDestination);
-
-  // Get the processed stream
-  echoCancelledStream = echoCancelledDestination.stream;
-
-  return echoCancelledStream;
-}
-
-function cleanupEchoCancellation() {
-  if (microphoneSource) {
-    microphoneSource.disconnect();
-    microphoneSource = null;
-  }
-  if (systemAudioSource) {
-    systemAudioSource.disconnect();
-    systemAudioSource = null;
-  }
-  if (echoCancellationContext) {
-    echoCancellationContext.close();
-    echoCancellationContext = null;
-  }
-  if (echoCancelledStream) {
-    echoCancelledStream.getTracks().forEach((track) => track.stop());
-    echoCancelledStream = null;
-  }
-  echoCancelledDestination = null;
-}
-
-// Update status display
 function updateAudioStatus() {
   if (micConnected && systemConnected) {
     audioStatus.textContent = 'Audio: Connected';
@@ -118,7 +25,6 @@ function updateAudioStatus() {
   }
 }
 
-// Handle transcript updates
 window.electronAPI.onTranscript((data) => {
   const { text, partial } = data;
 
@@ -128,7 +34,6 @@ window.electronAPI.onTranscript((data) => {
   const prefix = partial ? '>> ' : `[${timestamp}] `;
 
   if (partial) {
-    // Update or create partial transcript element
     let partialElement = transcriptionResults.querySelector('.partial');
     if (!partialElement) {
       partialElement = document.createElement('div');
@@ -137,13 +42,11 @@ window.electronAPI.onTranscript((data) => {
     }
     partialElement.textContent = prefix + text;
   } else {
-    // Remove partial element if exists
     const partialElement = transcriptionResults.querySelector('.partial');
     if (partialElement) {
       partialElement.remove();
     }
 
-    // Add final transcript
     const transcriptElement = document.createElement('div');
     transcriptElement.textContent = prefix + text;
     transcriptionResults.appendChild(transcriptElement);
@@ -152,7 +55,6 @@ window.electronAPI.onTranscript((data) => {
   transcriptionResults.scrollTop = transcriptionResults.scrollHeight;
 });
 
-// Handle connection status updates
 window.electronAPI.onConnectionStatus((data) => {
   const { stream, connected } = data;
   if (stream === 'microphone') {
@@ -163,107 +65,17 @@ window.electronAPI.onConnectionStatus((data) => {
   updateAudioStatus();
 });
 
-// Handle errors
 window.electronAPI.onError((message) => {
   console.error('Error:', message);
   alert('Error: ' + message);
   stop();
 });
 
-// Note: Audio processing is now handled directly in start() and stop() functions
-// with echo cancellation, so these old event handlers are no longer needed
-
-// Audio processing functions
-async function startAudioProcessing(processedStream, systemStream) {
-  // Process the echo-cancelled stream as microphone audio
-  microphoneAudioContext = new AudioContext({ sampleRate: 16000 });
-
-  // Load the AudioWorklet processor
-  await microphoneAudioContext.audioWorklet.addModule('./audio-processor.js');
-
-  const micSource =
-    microphoneAudioContext.createMediaStreamSource(processedStream);
-  microphoneWorkletNode = new AudioWorkletNode(
-    microphoneAudioContext,
-    'audio-processor'
-  );
-
-  // Handle audio data from the worklet
-  microphoneWorkletNode.port.onmessage = (event) => {
-    if (event.data.type === 'audioData') {
-      // Send the echo-cancelled audio as microphone audio
-      window.electronAPI.sendMicrophoneAudio(event.data.data);
-    }
-  };
-
-  micSource.connect(microphoneWorkletNode);
-  microphoneWorkletNode.connect(microphoneAudioContext.destination);
-
-  // Only process system audio separately if provided (for backwards compatibility)
-  if (systemStream) {
-    systemAudioContext = new AudioContext({ sampleRate: 16000 });
-
-    // Load the AudioWorklet processor for system audio
-    await systemAudioContext.audioWorklet.addModule('./audio-processor.js');
-
-    const systemSource =
-      systemAudioContext.createMediaStreamSource(systemStream);
-    systemAudioWorkletNode = new AudioWorkletNode(
-      systemAudioContext,
-      'audio-processor'
-    );
-
-    // Handle audio data from the system audio worklet
-    systemAudioWorkletNode.port.onmessage = (event) => {
-      if (event.data.type === 'audioData') {
-        window.electronAPI.sendSystemAudio(event.data.data);
-      }
-    };
-
-    systemSource.connect(systemAudioWorkletNode);
-    systemAudioWorkletNode.connect(systemAudioContext.destination);
-  }
-}
-
-function stopAudioProcessing() {
-  if (microphoneWorkletNode) {
-    // Notify the worklet to stop recording
-    microphoneWorkletNode.port.postMessage({
-      type: 'setRecording',
-      value: false,
-    });
-    microphoneWorkletNode.disconnect();
-    microphoneWorkletNode = null;
-  }
-
-  if (systemAudioWorkletNode) {
-    // Notify the worklet to stop recording
-    systemAudioWorkletNode.port.postMessage({
-      type: 'setRecording',
-      value: false,
-    });
-    systemAudioWorkletNode.disconnect();
-    systemAudioWorkletNode = null;
-  }
-
-  if (microphoneAudioContext) {
-    microphoneAudioContext.close();
-    microphoneAudioContext = null;
-  }
-
-  if (systemAudioContext) {
-    systemAudioContext.close();
-    systemAudioContext = null;
-  }
-}
-
-// Start transcription
 async function start() {
   try {
     toggleBtn.disabled = true;
     toggleBtn.textContent = 'Starting...';
 
-    // Clear previous transcripts
     transcriptionResults.innerHTML = '';
 
     const constraints = {
@@ -279,7 +91,6 @@ async function start() {
 
     await window.electronAPI.enableLoopbackAudio();
 
-    // Get display media (system audio)
     const displayStream = await navigator.mediaDevices.getDisplayMedia({
       audio: true,
       video: true,
@@ -287,7 +98,6 @@ async function start() {
 
     await window.electronAPI.disableLoopbackAudio();
 
-    // Remove video tracks, keep only audio
     const videoTracks = displayStream
       .getTracks()
       .filter((t) => t.kind === 'video');
@@ -298,37 +108,22 @@ async function start() {
 
     systemAudioStream = displayStream;
 
-    // Process audio streams through echo cancellation
     console.log('Processing audio streams with echo cancellation...');
     const processedStream = processEchoCancellation(
       microphoneStream,
       systemAudioStream
     );
 
-    // Start audio processing for the processed stream (but don't start recording yet)
-    await startAudioProcessing(processedStream, null); // Only process the echo-cancelled stream
+    await startAudioProcessing(processedStream, null);
 
-    // Start recording with AssemblyAI first
     const success = await window.electronAPI.startRecording();
 
     if (!success) {
       throw new Error('Failed to start recording');
     }
 
-    // Only start recording in worklet nodes after AssemblyAI connection is established
     isRecording = true;
-    if (microphoneWorkletNode) {
-      microphoneWorkletNode.port.postMessage({
-        type: 'setRecording',
-        value: true,
-      });
-    }
-    if (systemAudioWorkletNode) {
-      systemAudioWorkletNode.port.postMessage({
-        type: 'setRecording',
-        value: true,
-      });
-    }
+    setRecordingState(true);
 
     toggleBtn.disabled = false;
     toggleBtn.textContent = 'Stop Recording';
@@ -347,19 +142,15 @@ async function start() {
   }
 }
 
-// Stop transcription
 async function stop() {
   toggleBtn.disabled = true;
   toggleBtn.textContent = 'Stopping...';
   isRecording = false;
 
-  // Stop recording
   await window.electronAPI.stopRecording();
 
-  // Stop audio processing
   stopAudioProcessing();
 
-  // Stop media streams
   if (microphoneStream) {
     microphoneStream.getTracks().forEach((track) => track.stop());
     microphoneStream = null;
@@ -370,7 +161,6 @@ async function stop() {
     systemAudioStream = null;
   }
 
-  // Cleanup echo cancellation
   cleanupEchoCancellation();
 
   micConnected = false;
@@ -383,7 +173,6 @@ async function stop() {
   toggleBtn.classList.add('start');
 }
 
-// Toggle function
 async function toggle() {
   if (isRecording) {
     await stop();
@@ -392,68 +181,10 @@ async function toggle() {
   }
 }
 
-// Settings modal functions
-function showSettingsModal() {
-  settingsModal.classList.add('active');
-  loadSettings();
-}
-
-function hideSettingsModal() {
-  settingsModal.classList.remove('active');
-}
-
-async function loadSettings() {
-  try {
-    const settings = await window.electronAPI.getSettings();
-    assemblyaiKeyInput.value = settings.assemblyaiKey || '';
-    slackTokenInput.value = settings.slackToken || '';
-    slackChannelInput.value = settings.slackChannel || '';
-    summaryPromptInput.value =
-      settings.summaryPrompt ||
-      'Please provide a concise summary of this transcription, highlighting key points, decisions made, and action items discussed.';
-  } catch (error) {
-    console.error('Error loading settings:', error);
-  }
-}
-
-async function saveSettings() {
-  try {
-    const settings = {
-      assemblyaiKey: assemblyaiKeyInput.value,
-      slackToken: slackTokenInput.value,
-      slackChannel: slackChannelInput.value,
-      summaryPrompt: summaryPromptInput.value,
-    };
-
-    await window.electronAPI.saveSettings(settings);
-    alert('Settings saved successfully!');
-    hideSettingsModal();
-  } catch (error) {
-    console.error('Error saving settings:', error);
-    alert('Error saving settings: ' + error.message);
-  }
-}
-
-// Event listeners
 toggleBtn.addEventListener('click', toggle);
 settingsBtn.addEventListener('click', showSettingsModal);
-closeBtn.addEventListener('click', hideSettingsModal);
-saveBtn.addEventListener('click', saveSettings);
 
-// Close modal when clicking outside the dialog
-settingsModal.addEventListener('click', (e) => {
-  if (e.target === settingsModal) {
-    hideSettingsModal();
-  }
-});
+setupSettingsModalEvents();
 
-// Close modal with Escape key
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && settingsModal.classList.contains('active')) {
-    hideSettingsModal();
-  }
-});
-
-// Initialize
 toggleBtn.textContent = 'Start Recording';
 toggleBtn.classList.add('start');
