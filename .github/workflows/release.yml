@@ -73,7 +73,7 @@ jobs:
 
       - name: Build Electron app (macOS)
         if: matrix.os == 'macos-latest'
-        run: npm run build-icons && electron-builder --mac --publish always
+        run: npm run build-icons && npx electron-builder --mac --publish always
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Add these if you plan to code sign (optional)
@@ -84,13 +84,13 @@ jobs:
 
       - name: Build Electron app (Windows)
         if: matrix.os == 'windows-latest'
-        run: npm run build-icons && electron-builder --win --publish always
+        run: npm run build-icons && npx electron-builder --win --publish always
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Electron app (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: npm run build-icons && electron-builder --linux --publish always
+        run: npm run build-icons && npx electron-builder --linux --publish always
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
