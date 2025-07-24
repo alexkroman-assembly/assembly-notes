@@ -29,7 +29,7 @@ Download the latest release for your platform:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/assembly-notes.git
+git clone https://github.com/alexkroman-assembly/assembly-notes.git
 cd assembly-notes
 
 # Install dependencies
@@ -59,21 +59,6 @@ npm run pack           # Package without distributing
 3. **Custom Summary Prompts**: Customize AI-generated summaries
 
 Settings are stored in your system's user data directory and persist between app sessions.
-
-## Architecture
-
-### Core Technologies
-
-- **Electron 35.0.0** - Desktop app framework using ES6 modules
-- **AssemblyAI SDK** - Real-time speech transcription
-- **Slack Web API** - Automated posting of meeting summaries
-- **electron-audio-loopback** - System audio capture
-
-### Process Architecture
-
-- **Main Process** (`src/main/`) - Audio processing, transcription, and Slack integration
-- **Renderer Process** (`src/renderer/`) - Frontend UI with audio stream management
-- **Preload Script** (`src/preload/`) - Secure IPC bridge
 
 ## Release Process
 
@@ -110,16 +95,6 @@ This project features a completely automated release pipeline:
    - Generates release notes from your commit messages
    - Creates a GitHub release with downloadable assets
    - Makes the release available to users immediately
-
-#### **What Gets Automated**
-
-- ✅ Version bumping in package.json
-- ✅ Git tagging and pushing
-- ✅ Cross-platform building (macOS, Windows, Linux)
-- ✅ Code quality checks (linting)
-- ✅ Release notes generation from commits
-- ✅ GitHub release creation with assets
-- ✅ Installer/package creation for all platforms
 
 #### **Manual Build (if needed)**
 
