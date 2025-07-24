@@ -182,7 +182,8 @@
         font-weight: 500;
       }
 
-      .form-group input {
+      .form-group input,
+      .form-group textarea {
         width: 100%;
         font-size: 0.9em;
         padding: 8px 10px;
@@ -192,16 +193,24 @@
         border-radius: 4px;
         box-sizing: border-box;
         transition: all 0.2s ease;
+        font-family: inherit;
       }
 
-      .form-group input:focus {
+      .form-group textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
         outline: none;
         border-color: rgba(255, 255, 255, 0.4);
         background-color: rgba(255, 255, 255, 0.12);
         box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
       }
 
-      .form-group input::placeholder {
+      .form-group input::placeholder,
+      .form-group textarea::placeholder {
         color: rgba(255, 255, 255, 0.4);
       }
 
@@ -259,6 +268,14 @@ Waiting for audio input...</pre
                 id="slackChannel"
                 placeholder="Enter Slack channel name"
               />
+            </div>
+
+            <div class="form-group">
+              <label for="summaryPrompt">Summary Prompt</label>
+              <textarea
+                id="summaryPrompt"
+                placeholder="Enter custom summarization prompt"
+              ></textarea>
             </div>
 
             <div class="settings-actions">

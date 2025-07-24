@@ -58,11 +58,11 @@ const DEFAULT_SUMMARY_PROMPT =
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 500,
-    height: 450,
+    height: 500,
     minWidth: 400,
     maxWidth: 800,
     maxHeight: 800,
-    minHeight: 300,
+    minHeight: 600,
     title: 'Assembly Notes',
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
@@ -123,9 +123,12 @@ async function processRecordingComplete() {
   const title = `Meeting Summary - ${now.toLocaleString()}`;
 
   try {
+    // Get custom summary prompt from settings, fallback to default
+    const summaryPrompt = settings.summaryPrompt || DEFAULT_SUMMARY_PROMPT;
+
     const lemur = aai.lemur;
     const result = await lemur.task({
-      prompt: DEFAULT_SUMMARY_PROMPT,
+      prompt: summaryPrompt,
       input_text: fullTranscript,
       final_model: 'anthropic/claude-sonnet-4-20250514',
     });

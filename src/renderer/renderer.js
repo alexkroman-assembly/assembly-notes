@@ -27,6 +27,7 @@ const settingsModal = document.getElementById('settingsModal');
 const assemblyaiKeyInput = document.getElementById('assemblyaiKey');
 const slackTokenInput = document.getElementById('slackToken');
 const slackChannelInput = document.getElementById('slackChannel');
+const summaryPromptInput = document.getElementById('summaryPrompt');
 
 // Echo cancellation processing
 function createEchoCancellationProcessor() {
@@ -395,6 +396,9 @@ async function loadSettings() {
     assemblyaiKeyInput.value = settings.assemblyaiKey || '';
     slackTokenInput.value = settings.slackToken || '';
     slackChannelInput.value = settings.slackChannel || '';
+    summaryPromptInput.value =
+      settings.summaryPrompt ||
+      'Please provide a concise summary of this transcription, highlighting key points, decisions made, and action items discussed.';
   } catch (error) {
     console.error('Error loading settings:', error);
   }
@@ -406,6 +410,7 @@ async function saveSettings() {
       assemblyaiKey: assemblyaiKeyInput.value,
       slackToken: slackTokenInput.value,
       slackChannel: slackChannelInput.value,
+      summaryPrompt: summaryPromptInput.value,
     };
 
     await window.electronAPI.saveSettings(settings);
