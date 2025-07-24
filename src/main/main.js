@@ -60,8 +60,6 @@ function createWindow() {
     width: 500,
     height: 500,
     minWidth: 400,
-    maxWidth: 800,
-    maxHeight: 800,
     minHeight: 600,
     title: 'Assembly Notes',
     webPreferences: {
