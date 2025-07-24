@@ -1,19 +1,70 @@
 import { AssemblyAI } from 'assemblyai';
+import _ from 'lodash';
 import { getSettings } from './settings.js';
 import { postToSlack } from './slack.js';
 
-let microphoneTranscriber = null;
-let systemAudioTranscriber = null;
+let transcribers = {};
 let aai = null;
 
-let microphoneTranscript = '';
-let systemAudioTranscript = '';
+const transcripts = {
+  microphone: '',
+  system: '',
+};
 
 const DEFAULT_SUMMARY_PROMPT =
   'Please provide a concise summary of this transcription, highlighting key points, decisions made, and action items discussed.';
 
+function createTranscriber(streamType, aai, mainWindow) {
+  const transcriber = aai.realtime.transcriber({
+    sampleRate: 16000,
+  });
+
+  transcriber.on('open', () => {
+    console.log(`✅ ${_.capitalize(streamType)} transcriber connected`);
+    mainWindow.webContents.send('connection-status', {
+      stream: streamType,
+      connected: true,
+    });
+  });
+
+  transcriber.on('error', (error) => {
+    console.error(`❌ ${_.capitalize(streamType)} transcription error:`, error);
+    mainWindow.webContents.send(
+      'error',
+      `${_.capitalize(streamType)} error: ${error.message}`
+    );
+  });
+
+  transcriber.on('close', () => {
+    mainWindow.webContents.send('connection-status', {
+      stream: streamType,
+      connected: false,
+    });
+  });
+
+  transcriber.on('transcript', (transcript) => {
+    if (!transcript.text) return;
+
+    if (transcript.message_type === 'FinalTranscript') {
+      const line = `${transcript.text}\n`;
+      transcripts[streamType] += line;
+      mainWindow.webContents.send('transcript', {
+        text: transcript.text,
+        partial: false,
+      });
+    } else {
+      mainWindow.webContents.send('transcript', {
+        text: transcript.text,
+        partial: true,
+      });
+    }
+  });
+
+  return transcriber;
+}
+
 async function processRecordingComplete() {
-  const fullTranscript = microphoneTranscript + systemAudioTranscript;
+  const fullTranscript = _.values(transcripts).join('');
   if (!fullTranscript.trim()) {
     return false;
   }
@@ -56,103 +107,21 @@ async function startTranscription(mainWindow) {
   try {
     aai = new AssemblyAI({ apiKey: assemblyAiApiKey });
 
-    microphoneTranscript = '';
-    systemAudioTranscript = '';
-
-    microphoneTranscriber = aai.realtime.transcriber({
-      sampleRate: 16000,
+    _.forEach(transcripts, (value, key) => {
+      transcripts[key] = '';
     });
 
-    microphoneTranscriber.on('open', () => {
-      console.log('✅ Microphone transcriber connected');
-      mainWindow.webContents.send('connection-status', {
-        stream: 'microphone',
-        connected: true,
-      });
-    });
+    const streamTypes = ['microphone', 'system'];
+    transcribers = _.fromPairs(
+      streamTypes.map((type) => [
+        type,
+        createTranscriber(type, aai, mainWindow),
+      ])
+    );
 
-    microphoneTranscriber.on('error', (error) => {
-      console.error('❌ Microphone transcription error:', error);
-      mainWindow.webContents.send(
-        'error',
-        `Microphone error: ${error.message}`
-      );
-    });
-
-    microphoneTranscriber.on('close', () => {
-      mainWindow.webContents.send('connection-status', {
-        stream: 'microphone',
-        connected: false,
-      });
-    });
-
-    microphoneTranscriber.on('transcript', (transcript) => {
-      if (!transcript.text) return;
-
-      if (transcript.message_type === 'FinalTranscript') {
-        const line = `${transcript.text}\n`;
-        microphoneTranscript += line;
-        mainWindow.webContents.send('transcript', {
-          text: transcript.text,
-          partial: false,
-        });
-      } else {
-        mainWindow.webContents.send('transcript', {
-          text: transcript.text,
-          partial: true,
-        });
-      }
-    });
-
-    systemAudioTranscriber = aai.realtime.transcriber({
-      sampleRate: 16000,
-    });
-
-    systemAudioTranscriber.on('open', () => {
-      console.log('✅ System audio transcriber connected');
-      mainWindow.webContents.send('connection-status', {
-        stream: 'system',
-        connected: true,
-      });
-    });
-
-    systemAudioTranscriber.on('error', (error) => {
-      console.error('❌ System audio transcription error:', error);
-      mainWindow.webContents.send(
-        'error',
-        `System audio error: ${error.message}`
-      );
-    });
-
-    systemAudioTranscriber.on('close', () => {
-      mainWindow.webContents.send('connection-status', {
-        stream: 'system',
-        connected: false,
-      });
-    });
-
-    systemAudioTranscriber.on('transcript', (transcript) => {
-      if (!transcript.text) return;
-
-      if (transcript.message_type === 'FinalTranscript') {
-        const line = `${transcript.text}\n`;
-        systemAudioTranscript += line;
-        mainWindow.webContents.send('transcript', {
-          text: transcript.text,
-          partial: false,
-        });
-      } else {
-        mainWindow.webContents.send('transcript', {
-          text: transcript.text,
-          partial: true,
-        });
-      }
-    });
-
-    await Promise.all([
-      microphoneTranscriber.connect(),
-      systemAudioTranscriber.connect(),
-    ]);
+    await Promise.all(
+      _.map(transcribers, (transcriber) => transcriber.connect())
+    );
 
     console.log('✅ Both transcribers connected successfully');
     mainWindow.webContents.send('start-audio-capture');
@@ -168,15 +137,15 @@ async function startTranscription(mainWindow) {
 async function stopTranscription(mainWindow) {
   mainWindow.webContents.send('stop-audio-capture');
 
-  if (microphoneTranscriber) {
-    await microphoneTranscriber.close();
-    microphoneTranscriber = null;
-  }
+  await Promise.all(
+    _.map(transcribers, async (transcriber) => {
+      if (transcriber) {
+        await transcriber.close();
+      }
+    })
+  );
 
-  if (systemAudioTranscriber) {
-    await systemAudioTranscriber.close();
-    systemAudioTranscriber = null;
-  }
+  transcribers = {};
 
   console.log('✅ Recording stopped.');
   mainWindow.webContents.send('recording-stopped');
@@ -189,10 +158,11 @@ async function stopTranscription(mainWindow) {
 }
 
 function sendMicrophoneAudio(audioData) {
-  if (microphoneTranscriber) {
+  const transcriber = transcribers.microphone;
+  if (transcriber) {
     try {
       const buffer = Buffer.from(audioData);
-      microphoneTranscriber.sendAudio(buffer);
+      transcriber.sendAudio(buffer);
     } catch (error) {
       console.error('Error sending microphone audio:', error);
     }
@@ -200,10 +170,11 @@ function sendMicrophoneAudio(audioData) {
 }
 
 function sendSystemAudio(audioData) {
-  if (systemAudioTranscriber) {
+  const transcriber = transcribers.system;
+  if (transcriber) {
     try {
       const buffer = Buffer.from(audioData);
-      systemAudioTranscriber.sendAudio(buffer);
+      transcriber.sendAudio(buffer);
     } catch (error) {
       console.error('Error sending system audio:', error);
     }
