@@ -20,6 +20,7 @@ async function postToSlack(summary, title) {
     await slackClient.chat.postMessage({
       channel: slackChannel,
       text: `*${title}*\n\n${summary}`,
+      mrkdwn: true,
     });
   } catch (error) {
     console.error(`Error posting to Slack: ${error.message}`);

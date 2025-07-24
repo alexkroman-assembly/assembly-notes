@@ -1,13 +1,35 @@
 window.SettingsModal = (function () {
-  const settingsModal = document.getElementById('settingsModal');
-  const assemblyaiKeyInput = document.getElementById('assemblyaiKey');
-  const slackTokenInput = document.getElementById('slackToken');
-  const slackChannelInput = document.getElementById('slackChannel');
-  const summaryPromptInput = document.getElementById('summaryPrompt');
-  const closeBtn = document.getElementById('closeBtn');
-  const saveBtn = document.getElementById('saveBtn');
+  let settingsModal;
+  let assemblyaiKeyInput;
+  let slackTokenInput;
+  let slackChannelInput;
+  let summaryPromptInput;
+  let closeBtn;
+  let saveBtn;
+  let isInitialized = false;
 
-  function showSettingsModal() {
+  async function initializeModal() {
+    if (isInitialized) return;
+
+    const container = document.getElementById('settingsModalContainer');
+    const response = await fetch('./settings-modal.html');
+    const html = await response.text();
+    container.innerHTML = html;
+
+    settingsModal = document.getElementById('settingsModal');
+    assemblyaiKeyInput = document.getElementById('assemblyaiKey');
+    slackTokenInput = document.getElementById('slackToken');
+    slackChannelInput = document.getElementById('slackChannel');
+    summaryPromptInput = document.getElementById('summaryPrompt');
+    closeBtn = document.getElementById('closeBtn');
+    saveBtn = document.getElementById('saveBtn');
+
+    setupSettingsModalEvents();
+    isInitialized = true;
+  }
+
+  async function showSettingsModal() {
+    await initializeModal();
     settingsModal.classList.add('active');
     loadSettings();
   }
@@ -49,6 +71,7 @@ window.SettingsModal = (function () {
   }
 
   function setupSettingsModalEvents() {
+    if (!closeBtn || !saveBtn || !settingsModal) return;
     closeBtn.addEventListener('click', hideSettingsModal);
     saveBtn.addEventListener('click', saveSettings);
 
@@ -68,6 +91,5 @@ window.SettingsModal = (function () {
   return {
     showSettingsModal,
     hideSettingsModal,
-    setupSettingsModalEvents,
   };
 })();

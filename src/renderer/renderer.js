@@ -2,7 +2,7 @@ const { processEchoCancellation, cleanupEchoCancellation } =
   window.EchoCancellation;
 const { startAudioProcessing, stopAudioProcessing, setRecordingState } =
   window.AudioProcessing;
-const { showSettingsModal, setupSettingsModalEvents } = window.SettingsModal;
+const { showSettingsModal } = window.SettingsModal;
 
 let microphoneStream = null;
 let systemAudioStream = null;
@@ -51,8 +51,6 @@ window.electronAPI.onTranscript((data) => {
     transcriptElement.textContent = prefix + text;
     transcriptionResults.appendChild(transcriptElement);
   }
-
-  transcriptionResults.scrollTop = transcriptionResults.scrollHeight;
 });
 
 window.electronAPI.onConnectionStatus((data) => {
@@ -108,7 +106,6 @@ async function start() {
 
     systemAudioStream = displayStream;
 
-    console.log('Processing audio streams with echo cancellation...');
     const processedStream = processEchoCancellation(
       microphoneStream,
       systemAudioStream
@@ -129,7 +126,6 @@ async function start() {
     toggleBtn.textContent = 'Stop Recording';
     toggleBtn.classList.remove('start');
     toggleBtn.classList.add('recording');
-    console.log('Transcription started for both streams');
   } catch (error) {
     console.error('Error starting transcription:', error);
     alert('Error starting transcription: ' + error.message);
@@ -183,8 +179,6 @@ async function toggle() {
 
 toggleBtn.addEventListener('click', toggle);
 settingsBtn.addEventListener('click', showSettingsModal);
-
-setupSettingsModalEvents();
 
 toggleBtn.textContent = 'Start Recording';
 toggleBtn.classList.add('start');

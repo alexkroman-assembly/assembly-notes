@@ -64,19 +64,27 @@ async function startTranscription(mainWindow) {
     });
 
     microphoneTranscriber.on('open', () => {
-      console.log('✅ Microphone transcriber connected');
       mainWindow.webContents.send('connection-status', {
         stream: 'microphone',
         connected: true,
       });
     });
 
-    microphoneTranscriber.on('error', (error) => {
+    microphoneTranscriber.on('error', async (error) => {
       console.error('❌ Microphone transcription error:', error);
       mainWindow.webContents.send(
         'error',
         `Microphone error: ${error.message}`
       );
+
+      // Check if this is a session idle timeout error
+      if (
+        error.message &&
+        error.message.includes('Session idle for too long')
+      ) {
+        console.log('Session idle timeout detected, stopping recording...');
+        await stopTranscription(mainWindow);
+      }
     });
 
     microphoneTranscriber.on('close', () => {
@@ -109,19 +117,27 @@ async function startTranscription(mainWindow) {
     });
 
     systemAudioTranscriber.on('open', () => {
-      console.log('✅ System audio transcriber connected');
       mainWindow.webContents.send('connection-status', {
         stream: 'system',
         connected: true,
       });
     });
 
-    systemAudioTranscriber.on('error', (error) => {
+    systemAudioTranscriber.on('error', async (error) => {
       console.error('❌ System audio transcription error:', error);
       mainWindow.webContents.send(
         'error',
         `System audio error: ${error.message}`
       );
+
+      // Check if this is a session idle timeout error
+      if (
+        error.message &&
+        error.message.includes('Session idle for too long')
+      ) {
+        console.log('Session idle timeout detected, stopping recording...');
+        await stopTranscription(mainWindow);
+      }
     });
 
     systemAudioTranscriber.on('close', () => {
@@ -154,7 +170,6 @@ async function startTranscription(mainWindow) {
       systemAudioTranscriber.connect(),
     ]);
 
-    console.log('✅ Both transcribers connected successfully');
     mainWindow.webContents.send('start-audio-capture');
 
     return true;
