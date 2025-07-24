@@ -99,3 +99,26 @@ jobs:
         with:
           name: dist-${{ matrix.os }}
           path: dist/
+
+  # Create GitHub release with all build artifacts
+  create-release:
+    needs: [release-notes, release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ needs.release-notes.outputs.release-notes }}
+          files: |
+            artifacts/dist-macos-latest/*.dmg
+            artifacts/dist-windows-latest/*.exe
+            artifacts/dist-linux-latest/*.AppImage
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -12,11 +12,19 @@ A desktop application for real-time transcription and meeting note-taking. Recor
 
 ## Installation
 
-Download the latest release for your platform:
+### Download Latest Release
+
+[![Latest Release](https://img.shields.io/github/v/release/alexkroman-assembly/assembly-notes)](https://github.com/alexkroman-assembly/assembly-notes/releases/latest)
+
+**[📥 Download Latest Release](https://github.com/alexkroman-assembly/assembly-notes/releases/latest)**
+
+Choose your platform:
 
 - **macOS**: Download the `.dmg` file
 - **Windows**: Download the `.exe` installer
 - **Linux**: Download the `.AppImage` file
+
+> **Note**: All releases are automatically built and tested via GitHub Actions. Visit the [releases page](https://github.com/alexkroman-assembly/assembly-notes/releases) to see all available versions.
 
 ## Development Setup
 
