@@ -279,7 +279,6 @@ async function toggle() {
 // Event listeners
 toggleBtn.addEventListener('click', toggle);
 
-
 // Initialize
 toggleBtn.textContent = 'Start Recording';
 toggleBtn.classList.add('start');
