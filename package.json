@@ -1,0 +1,28 @@
+{
+  "name": "assembly-notes",
+  "productName": "Assembly Notes",
+  "description": "Assembly Notes",
+  "keywords": [],
+  "main": "./src/main/main.js",
+  "type": "module",
+  "version": "1.0.0",
+  "author": "Alex Kroman <alex@alexkroman.com>",
+  "scripts": {
+    "start": "electron .",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@slack/web-api": "^7.9.3",
+    "assemblyai": "^4.14.0",
+    "dotenv": "^17.2.0",
+    "electron-audio-loopback": "^1.0.5"
+  },
+  "devDependencies": {
+    "electron": "35.0.0",
+    "eslint": "^9.15.0",
+    "prettier": "^3.4.2",
+    "@eslint/js": "^9.15.0",
+    "globals": "^15.12.0"
+  }
+}

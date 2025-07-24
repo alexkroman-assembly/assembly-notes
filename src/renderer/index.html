@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AssemblyAI Notes</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #212121;
+        color: white;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 10px auto 0 auto;
+        padding: 0 12px 12px 12px;
+        height: calc(100vh - 10px);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+
+      button,
+      select {
+        font-size: 1em;
+        margin-right: 8px;
+        padding: 6px 12px;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+      }
+
+      button:disabled,
+      select:disabled {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.5);
+        border-color: rgba(255, 255, 255, 0.05);
+      }
+
+      button.start {
+        background-color: rgba(40, 167, 69, 0.2);
+        border-color: rgba(40, 167, 69, 0.5);
+        color: #28a745;
+      }
+
+      button.start:hover {
+        background-color: rgba(40, 167, 69, 0.3);
+      }
+
+      button.recording {
+        background-color: rgba(220, 53, 69, 0.2);
+        border-color: rgba(220, 53, 69, 0.5);
+        color: #dc3545;
+      }
+
+      button.recording:hover {
+        background-color: rgba(220, 53, 69, 0.3);
+      }
+
+      .status {
+        margin: 0px 0;
+        padding: 4px 8px;
+        font-size: 0.8em;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .results {
+        margin: 12px 0 12px 0;
+        padding: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        flex: 1;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-family: monospace;
+        font-size: 1em;
+        white-space: pre-wrap;
+        overflow-y: auto;
+      }
+
+      .section {
+        margin: 18px 0 6px 0;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.7em;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.65);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="controls">
+        <button id="toggleBtn" type="button">Start Recording</button>
+        <div id="audioStatus" class="status disconnected">
+          Audio: Disconnected
+        </div>
+      </div>
+      <pre class="results" id="transcriptionResults">
+Waiting for audio input...</pre
+      >
+    </div>
+    <script src="./renderer.js"></script>
+  </body>
+</html>
