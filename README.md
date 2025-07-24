@@ -14,7 +14,7 @@ A desktop application for real-time transcription and meeting note-taking. Recor
 
 ### Download Latest Release
 
-[![Latest Release](https://img.shields.io/github/v/release/alexkroman-assembly/assembly-notes)](https://github.com/alexkroman-assembly/assembly-notes/releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/alexkroman-assembly/assembly-notes?style=for-the-badge&logo=github)](https://github.com/alexkroman-assembly/assembly-notes/releases/latest)
 
 **[📥 Download Latest Release](https://github.com/alexkroman-assembly/assembly-notes/releases/latest)**
 
