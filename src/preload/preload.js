@@ -34,6 +34,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Settings management
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+
+  // Auto-updater
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  onUpdateAvailable: (callback) =>
+    ipcRenderer.on('update-available', (event, info) => callback(info)),
+  onDownloadProgress: (callback) =>
+    ipcRenderer.on('download-progress', (event, progress) =>
+      callback(progress)
+    ),
+  onUpdateDownloaded: (callback) =>
+    ipcRenderer.on('update-downloaded', (event, info) => callback(info)),
 });
 
 // Expose logger to renderer (sends to main process)

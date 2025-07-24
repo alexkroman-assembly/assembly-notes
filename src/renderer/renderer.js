@@ -5,6 +5,7 @@ const { processEchoCancellation, cleanupEchoCancellation } =
 const { startAudioProcessing, stopAudioProcessing, setRecordingState } =
   window.AudioProcessing;
 const { showSettingsModal } = window.SettingsModal;
+const { initAutoUpdaterUI } = window.AutoUpdaterUI;
 
 let microphoneStream = null;
 let systemAudioStream = null;
@@ -184,3 +185,6 @@ settingsBtn.addEventListener('click', showSettingsModal);
 
 toggleBtn.textContent = 'Start Recording';
 toggleBtn.classList.add('start');
+
+// Initialize auto-updater UI
+initAutoUpdaterUI();

@@ -8,6 +8,10 @@ const {
   sendSystemAudio,
   resetAai,
 } = require('./transcription.js');
+const {
+  checkForUpdatesAndNotify,
+  quitAndInstall,
+} = require('./auto-updater.js');
 const log = require('./logger.js');
 
 function setupIpcHandlers(mainWindow) {
@@ -47,6 +51,15 @@ function setupIpcHandlers(mainWindow) {
     resetSlackClient();
     resetAai();
     return true;
+  });
+
+  // Auto-updater IPC handlers
+  ipcMain.handle('install-update', () => {
+    quitAndInstall();
+  });
+
+  ipcMain.handle('check-for-updates', () => {
+    checkForUpdatesAndNotify();
   });
 }
 
