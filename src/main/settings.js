@@ -1,26 +1,41 @@
-import { app } from 'electron';
-import path from 'node:path';
-import fs from 'node:fs';
+import Store from 'electron-store';
 
-const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-let settings = {};
+const store = new Store({
+  defaults: {
+    assemblyaiKey: '',
+    slackToken: '',
+    slackChannel: '',
+    customPrompt: '',
+  },
+  schema: {
+    assemblyaiKey: {
+      type: 'string',
+      default: '',
+    },
+    slackToken: {
+      type: 'string',
+      default: '',
+    },
+    slackChannel: {
+      type: 'string',
+      default: '',
+    },
+    customPrompt: {
+      type: 'string',
+      default: '',
+    },
+  },
+});
 
 function loadSettings() {
-  try {
-    if (fs.existsSync(settingsPath)) {
-      const data = fs.readFileSync(settingsPath, 'utf8');
-      settings = JSON.parse(data);
-    }
-  } catch (error) {
-    console.error('Error loading settings:', error);
-    settings = {};
-  }
+  // No-op - electron-store handles loading automatically
 }
 
 function saveSettingsToFile(newSettings) {
   try {
-    settings = { ...settings, ...newSettings };
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    Object.keys(newSettings).forEach((key) => {
+      store.set(key, newSettings[key]);
+    });
   } catch (error) {
     console.error('Error saving settings:', error);
     throw error;
@@ -28,7 +43,7 @@ function saveSettingsToFile(newSettings) {
 }
 
 function getSettings() {
-  return settings;
+  return store.store;
 }
 
 export { loadSettings, saveSettingsToFile, getSettings };
