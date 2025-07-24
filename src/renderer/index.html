@@ -69,14 +69,15 @@
       }
 
       .status {
-        margin: 0px 0;
-        padding: 4px 8px;
-        font-size: 0.8em;
-        color: rgba(255, 255, 255, 0.7);
+        margin: 8px 0 6px 0;
+        padding: 2px 4px;
+        font-size: 0.7em;
+        color: rgba(255, 255, 255, 0.5);
+        text-align: center;
       }
 
       .results {
-        margin: 12px 0 12px 0;
+        margin: 12px 0 0 0;
         padding: 8px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 4px;
@@ -215,14 +216,14 @@
       <div class="main-page">
         <div class="controls">
           <button id="toggleBtn" type="button">Start Recording</button>
-          <div id="audioStatus" class="status disconnected">
-            Audio: Disconnected
-          </div>
           <button id="settingsBtn" type="button">Settings</button>
         </div>
         <pre class="results" id="transcriptionResults">
 Waiting for audio input...</pre
         >
+        <div id="audioStatus" class="status disconnected">
+          Audio: Disconnected
+        </div>
       </div>
 
       <div class="settings-modal" id="settingsModal">
