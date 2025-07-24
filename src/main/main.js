@@ -217,16 +217,14 @@ ipcMain.handle('start-recording', async () => {
       if (!transcript.text) return;
 
       if (transcript.message_type === 'FinalTranscript') {
-        const line = `[Microphone] ${transcript.text}\n`;
+        const line = `${transcript.text}\n`;
         microphoneTranscript += line;
         mainWindow.webContents.send('transcript', {
-          stream: 'microphone',
           text: transcript.text,
           partial: false,
         });
       } else {
         mainWindow.webContents.send('transcript', {
-          stream: 'microphone',
           text: transcript.text,
           partial: true,
         });
@@ -265,16 +263,14 @@ ipcMain.handle('start-recording', async () => {
       if (!transcript.text) return;
 
       if (transcript.message_type === 'FinalTranscript') {
-        const line = `[System Audio] ${transcript.text}\n`;
+        const line = `${transcript.text}\n`;
         systemAudioTranscript += line;
         mainWindow.webContents.send('transcript', {
-          stream: 'system',
           text: transcript.text,
           partial: false,
         });
       } else {
         mainWindow.webContents.send('transcript', {
-          stream: 'system',
           text: transcript.text,
           partial: true,
         });
