@@ -30,4 +30,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Remove event listeners
   removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
+
+  // Settings management
+  getSettings: () => ipcRenderer.invoke('get-settings'),
+  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
 });

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { initMain as initAudioLoopback } from 'electron-audio-loopback';
 import path from 'node:path';
-import dotenv from 'dotenv';
+import fs from 'node:fs';
 import { AssemblyAI } from 'assemblyai';
 import { WebClient } from '@slack/web-api';
 import { fileURLToPath } from 'node:url';
@@ -10,8 +10,36 @@ import { dirname } from 'node:path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-dotenv.config();
 initAudioLoopback();
+
+// Settings management
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+let settings = {};
+
+function loadSettings() {
+  try {
+    if (fs.existsSync(settingsPath)) {
+      const data = fs.readFileSync(settingsPath, 'utf8');
+      settings = JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    settings = {};
+  }
+}
+
+function saveSettingsToFile(newSettings) {
+  try {
+    settings = { ...settings, ...newSettings };
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    throw error;
+  }
+}
+
+// Load settings on startup
+loadSettings();
 
 let mainWindow;
 let microphoneTranscriber = null;
@@ -29,8 +57,8 @@ const DEFAULT_SUMMARY_PROMPT =
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 250,
+    width: 500,
+    height: 450,
     minWidth: 400,
     maxWidth: 800,
     maxHeight: 800,
@@ -62,14 +90,14 @@ app.on('window-all-closed', function () {
 // --- Helper Functions ---
 
 async function postToSlack(summary, title) {
-  const slackToken = process.env.SLACK_BOT_TOKEN;
-  const slackChannel = process.env.SLACK_CHANNEL;
+  const slackToken = settings.slackToken;
+  const slackChannel = settings.slackChannel;
 
   if (!slackToken || !slackChannel) {
     return;
   }
 
-  if (!slackClient) {
+  if (!slackClient || slackClient.token !== slackToken) {
     slackClient = new WebClient(slackToken);
   }
 
@@ -139,7 +167,7 @@ ipcMain.on('system-audio-data', (event, audioData) => {
 
 // Start recording
 ipcMain.handle('start-recording', async () => {
-  const assemblyAiApiKey = process.env.ASSEMBLYAI_API_KEY;
+  const assemblyAiApiKey = settings.assemblyaiKey;
   if (!assemblyAiApiKey) {
     mainWindow.webContents.send(
       'error',
@@ -292,6 +320,19 @@ ipcMain.handle('stop-recording', async () => {
     console.error('❌ Post-processing failed:', error);
   });
 
+  return true;
+});
+
+// Settings IPC handlers
+ipcMain.handle('get-settings', () => {
+  return settings;
+});
+
+ipcMain.handle('save-settings', (event, newSettings) => {
+  saveSettingsToFile(newSettings);
+  // Reset clients when settings change
+  slackClient = null;
+  aai = null;
   return true;
 });
 
