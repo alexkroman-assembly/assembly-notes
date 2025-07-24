@@ -116,11 +116,11 @@ jobs:
           body: ${{ needs.release-notes.outputs.release-notes }}
           files: |
             artifacts/dist-macos-latest/*.dmg
-            artifacts/dist-macos-latest/*.yml
+            artifacts/dist-macos-latest/latest*.yml
             artifacts/dist-windows-latest/*.exe
-            artifacts/dist-windows-latest/*.yml
+            artifacts/dist-windows-latest/latest*.yml
             artifacts/dist-linux-latest/*.AppImage
-            artifacts/dist-linux-latest/*.yml
+            artifacts/dist-linux-latest/latest*.yml
           draft: false
           prerelease: false
         env:
