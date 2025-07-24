@@ -17,7 +17,10 @@
     "dist": "npm run build",
     "pack": "electron-builder --dir",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "release:patch": "npm version patch && git push origin main --tags",
+    "release:minor": "npm version minor && git push origin main --tags",
+    "release:major": "npm version major && git push origin main --tags"
   },
   "dependencies": {
     "@slack/web-api": "^7.9.3",
@@ -38,6 +41,9 @@
   "build": {
     "appId": "com.alexkroman.assembly-notes",
     "productName": "Assembly Notes",
+    "publish": {
+      "provider": "github"
+    },
     "directories": {
       "output": "dist",
       "buildResources": "build"
