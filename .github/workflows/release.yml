@@ -71,8 +71,9 @@ jobs:
       - name: Run linting
         run: npm run lint
 
-      - name: Build Electron app
-        run: npm run build
+      - name: Build Electron app (macOS)
+        if: matrix.os == 'macos-latest'
+        run: npm run build:mac
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Add these if you plan to code sign (optional)
@@ -80,6 +81,18 @@ jobs:
           # CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           # APPLE_ID: ${{ secrets.APPLE_ID }}
           # APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+
+      - name: Build Electron app (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npm run build:win
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Electron app (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run build:linux
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
